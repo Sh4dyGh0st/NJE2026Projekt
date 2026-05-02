@@ -86,7 +86,6 @@ Swagger UI elérhető fejlesztői módban: `http://localhost:5000/swagger`
 ├── backend/          # ASP.NET Core Web API
 ├── frontend/         # React PWA
 ├── e2e/              # Playwright E2E tesztek
-├── .kiro/            # Spec és steering fájlok
 ├── package.json      # Root dev launcher
 └── NJE.slnx          # .NET solution fájl
 ```
