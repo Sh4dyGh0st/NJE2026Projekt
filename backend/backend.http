@@ -1,0 +1,394 @@
+### NJE Event Platform — Backend Smoke Tests
+### Run with VS Code REST Client extension
+### Admin userId = 5 (promoted via SQL: UPDATE Users SET Role='Admin' WHERE Id=5)
+
+@baseUrl = http://localhost:5000/api
+@adminId = 5
+@userId = 2
+
+### ============================================================
+### USERS
+### ============================================================
+
+### Register new user
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "fullName": "Teszt Felhasználó",
+  "email": "teszt@nje.hu",
+  "password": "Test1234!",
+  "institution": "NJE"
+}
+
+###
+
+### Login
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "teszt@nje.hu",
+  "password": "Test1234!"
+}
+
+###
+
+### Get profile (auth required)
+GET {{baseUrl}}/users/{{userId}}
+X-User-Id: {{userId}}
+
+###
+
+### Short password — expect 400
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "fullName": "X",
+  "email": "x@x.com",
+  "password": "short"
+}
+
+###
+
+### Duplicate email — expect 400
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "fullName": "Duplicate",
+  "email": "teszt@nje.hu",
+  "password": "Test1234!"
+}
+
+###
+
+### Update role (Admin only)
+PATCH {{baseUrl}}/users/{{userId}}/role
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+"Admin"
+
+###
+
+### Update role without auth — expect 401
+PATCH {{baseUrl}}/users/{{userId}}/role
+Content-Type: application/json
+
+"Admin"
+
+###
+
+### ============================================================
+### EVENTS
+### ============================================================
+
+### Get all published events (public)
+GET {{baseUrl}}/events
+
+###
+
+### Get event by ID (public)
+GET {{baseUrl}}/events/1
+
+###
+
+### Get non-existent event — expect 404
+GET {{baseUrl}}/events/9999
+
+###
+
+### Create event (Admin only)
+POST {{baseUrl}}/events
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "title": "NJE Konferencia 2026",
+  "description": "Éves tudományos konferencia",
+  "location": "GAMF Aula",
+  "room": "A101",
+  "startDate": "2026-09-01T09:00:00",
+  "endDate": "2026-09-01T17:00:00",
+  "maxParticipants": 200,
+  "isPublished": true
+}
+
+###
+
+### Create event without title — expect 400
+POST {{baseUrl}}/events
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "title": "",
+  "description": "x",
+  "location": "x",
+  "startDate": "2026-09-01T09:00:00",
+  "endDate": "2026-09-01T17:00:00",
+  "maxParticipants": 10
+}
+
+###
+
+### Create event with bad dates — expect 400
+POST {{baseUrl}}/events
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "title": "Bad Dates",
+  "description": "x",
+  "location": "x",
+  "startDate": "2026-09-01T17:00:00",
+  "endDate": "2026-09-01T09:00:00",
+  "maxParticipants": 10
+}
+
+###
+
+### Create event without auth — expect 401
+POST {{baseUrl}}/events
+Content-Type: application/json
+
+{
+  "title": "Unauthorized",
+  "description": "x",
+  "location": "x",
+  "startDate": "2026-09-01T09:00:00",
+  "endDate": "2026-09-01T17:00:00",
+  "maxParticipants": 10
+}
+
+###
+
+### Update event (Admin only) — replace 1 with actual event ID
+PUT {{baseUrl}}/events/1
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "title": "NJE Konferencia 2026 (frissítve)",
+  "description": "Frissített leírás",
+  "location": "GAMF Aula",
+  "room": "B202",
+  "startDate": "2026-09-01T09:00:00",
+  "endDate": "2026-09-01T18:00:00",
+  "maxParticipants": 250,
+  "isPublished": true
+}
+
+###
+
+### Get participants (Admin only) — replace 1 with actual event ID
+GET {{baseUrl}}/events/1/participants
+X-User-Id: {{adminId}}
+
+###
+
+### Get participants with User role — expect 403
+GET {{baseUrl}}/events/1/participants
+X-User-Id: {{userId}}
+
+###
+
+### Delete event (Admin only) — replace 1 with actual event ID
+DELETE {{baseUrl}}/events/1
+X-User-Id: {{adminId}}
+
+###
+
+### ============================================================
+### REGISTRATIONS
+### ============================================================
+
+### Join event (auth required) — replace eventId with actual ID
+POST {{baseUrl}}/registrations/join
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "userId": 2,
+  "eventId": 1
+}
+
+###
+
+### Join event without auth — expect 401
+POST {{baseUrl}}/registrations/join
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "eventId": 1
+}
+
+###
+
+### Duplicate join — expect 409
+POST {{baseUrl}}/registrations/join
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "userId": 2,
+  "eventId": 1
+}
+
+###
+
+### Check-in (Admin only) — replace qrData with actual QrToken from Users table
+POST {{baseUrl}}/registrations/checkin
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "qrData": "REPLACE_WITH_USER_QR_TOKEN",
+  "eventId": 1
+}
+
+###
+
+### Check-in with unknown QR — expect 404
+POST {{baseUrl}}/registrations/checkin
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "qrData": "00000000-0000-0000-0000-000000000000",
+  "eventId": 1
+}
+
+###
+
+### Delete registration (Admin only) — replace 1 with actual registration ID
+DELETE {{baseUrl}}/registrations/1
+X-User-Id: {{adminId}}
+
+###
+
+### Delete registration with User role — expect 403
+DELETE {{baseUrl}}/registrations/1
+X-User-Id: {{userId}}
+
+###
+
+### ============================================================
+### EVENT MODULES
+### ============================================================
+
+### Get modules for event (public) — replace 1 with actual event ID
+GET {{baseUrl}}/events/1/modules
+
+###
+
+### Get modules for non-existent event — expect 404
+GET {{baseUrl}}/events/9999/modules
+
+###
+
+### Create module (Admin only) — replace 1 with actual event ID
+POST {{baseUrl}}/events/1/modules
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "moduleType": "InformationPage",
+  "title": "Helyszín információ",
+  "content": "GAMF Aula, 1. emelet, A szárny",
+  "sortOrder": 1
+}
+
+###
+
+### Create Map module
+POST {{baseUrl}}/events/1/modules
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "moduleType": "Map",
+  "title": "Térkép",
+  "content": "https://maps.google.com/?q=Kecskemet+GAMF",
+  "sortOrder": 2
+}
+
+###
+
+### Update module (Admin only) — replace 1/1 with actual eventId/moduleId
+PUT {{baseUrl}}/events/1/modules/1
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "moduleType": "UsefulInformation",
+  "title": "Hasznos információk",
+  "content": "Parkolás ingyenes az intézmény udvarán.",
+  "sortOrder": 3
+}
+
+###
+
+### Delete module (Admin only) — replace 1/1 with actual eventId/moduleId
+DELETE {{baseUrl}}/events/1/modules/1
+X-User-Id: {{adminId}}
+
+###
+
+### ============================================================
+### NEWS
+### ============================================================
+
+### Get all news (public, ordered by CreatedAt desc)
+GET {{baseUrl}}/news
+
+###
+
+### Get news by category (case-insensitive)
+GET {{baseUrl}}/news/category/General
+
+###
+
+### Get news by category uppercase
+GET {{baseUrl}}/news/category/GENERAL
+
+###
+
+### Create news (Admin only)
+POST {{baseUrl}}/news
+Content-Type: application/json
+X-User-Id: {{adminId}}
+
+{
+  "title": "Fontos bejelentés",
+  "content": "Az NJE konferencia regisztrációja megnyílt.",
+  "category": "General"
+}
+
+###
+
+### Create news without auth — expect 401
+POST {{baseUrl}}/news
+Content-Type: application/json
+
+{
+  "title": "Unauthorized",
+  "content": "x",
+  "category": "x"
+}
+
+###
+
+### Create news with User role — expect 403
+POST {{baseUrl}}/news
+Content-Type: application/json
+X-User-Id: {{userId}}
+
+{
+  "title": "Forbidden",
+  "content": "x",
+  "category": "x"
+}
