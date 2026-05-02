@@ -1,0 +1,16 @@
+{
+  "name": "nje-event-platform",
+  "version": "1.0.0",
+  "description": "NJE Event Management Platform — monorepo root",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "dotnet run --project backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "test:e2e": "npm run test --prefix e2e"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

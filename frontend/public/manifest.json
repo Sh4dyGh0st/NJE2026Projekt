@@ -1,0 +1,16 @@
+{
+  "name": "NJE Eseménykezelő",
+  "short_name": "NJE Events",
+  "description": "Neumann János Egyetem eseménykezelő platform",
+  "theme_color": "#003087",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/nje-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

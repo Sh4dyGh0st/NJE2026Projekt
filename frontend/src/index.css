@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nje: #14532d;
+  --color-nje-light: #16a34a;
+  --color-nje-dark: #052e16;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
